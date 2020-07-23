@@ -2,13 +2,13 @@
 CPPFLAGS += -I /usr/local/include -DAT_DEBUG
 LD_LIBRARIES = -L/usr/local/lib -lCppUTest -lCppUTestExt
 
-VPATH = iotsafelib/common/src iotsafelib/platform/modem/src tests/unit/src example/src
+VPATH = iotsafelib/common/src iotsafelib/platform/modem/src tests/unit/src examples/simpledemo/src
 
 IOTSAFELIB_OBJECTS =  Applet.o ROT.o SEInterface.o ATInterface.o GenericModem.o LSerial.o Serial.o 
 TEST_OBJECTS =  rot_tests_helper.o rot_tests_unit_applet_tests.o rot_tests_unit_runner.o
 APP_OBJECTS = simpledemo.o util.o
 
-CPPFLAGS += -I iotsafelib/common/inc -I iotsafelib/platform/modem/inc -I tests/unit/include -I example/include
+CPPFLAGS += -I iotsafelib/common/inc -I iotsafelib/platform/modem/inc -I tests/unit/inc -I examples/simpledemo/inc
 
 TEST_TARGET = CppUTestIoTSafe
 IOTSAFELIB = iotsafelib.a
