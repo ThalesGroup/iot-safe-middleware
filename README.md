@@ -1,5 +1,10 @@
 ## IoT Safe Middleware Library Overview
 IoT Safe Middleware implements a set of API to support interactions with GSMA IoT Safe Applet on a SIM.
+![Overview](doc/middleware-overview.png)
+As depicted in this figure, IoT Safe Middleware is a thin layer to enable user application / other stacks to format and send APDUs to GSMA IoT Safe Applet running on a SIM card. 
+The IoT Safe middleware would be compiled and bundled with IoT Applications using other protocol stacks such as TLS.
+The IoT Applications bundling IoT Safe Middleware would typically run on IoT Devices with cellular connectivity.
+
 This project consists of IoT Safe Middleware library, unit tests and a sample application.
 
 ## System Requirements
@@ -24,10 +29,11 @@ sudo apt update
 sudo apt install snapd
 sudo reboot
 sudo snap install --candidate cmake --classic
+sudo apt-get install libssl-dev
 ```
 
 ### Hardware Test Requirements
-+ Cinterion Modem
++ 3G/4G/LTE Modem e.g Cinterion Connect Shield / Concept Board
 + IoT Safe SIM
 + Raspberry Pi 
 
