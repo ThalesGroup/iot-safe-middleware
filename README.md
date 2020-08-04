@@ -47,9 +47,11 @@ The make will build:
 
 - simpledemo
 
+- jwtdemo 
+
 - CppUTestIoTSafe
 
-  **simpledemo** *or* **CppUTestIotSafe** *can by run from the command line*
+  **simpledemo** *or* **jwtdemo** *or* **CppUTestIotSafe** *can be run from the command line*
 
 ### CMake
 
@@ -67,6 +69,36 @@ Alternatively, *CMake* can be used to automatically pull *CppUTest* dependency a
 	make
 	make test
 ```
+## JWT Signing demo
+An example to demonstrate how the IoT Safe Applet can be used to sign JWT token.
+This example uses ECDSA keypair on the SIM/UICC to sign JWT. 
+IoT Safe Applet on the  SIM/UICC is provisioned with a key containers containing ECDSA private (container ID = 01) and public key (Container ID = 02)
+### JWT Sample header and payload
+The following sample header and payload are used in this example
+#### JWT Header:
+```
+{"alg":"ES256","typ":"JWT"}
+```
+
+#### JWT Payload:
+```
+{"id": 42,"claimType": "claimType","claimUrl","claimUrl" }
+```
+
+#### A sample JWT computed using the about header and payload would be as follows:
+```
+eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IDQyLCJjbGFpbVR5cGUiOiAiY2xhaW1UeXBlIiwiY2xhaW1VcmwiOiJjbGFpbVVybCIgfQ.wMG0sp7BfdGDjvW4nJPE6swwEE0b7UvPmMWiYwa71zuAMuDpRbQasgcz3lls0V0jLh7XjmfnFPahSRs0Eh3OUQ
+```
+For easy verification of this token , the example app is also retrieving Public Key from UICC and print in on the console
+#### e.g Public Key
+```
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAElUtniK6dsGR6i/s/cAIxxISSjR7L
++lcy4O4FOlRWilW+O1R//HLobRJzzK8qEVPhp32r+GgZn8O7OgWoio4c/Q==
+-----END PUBLIC KEY-----
+```
+#### JWT Verification
+The generated JWT can be independantly verified by tools such as online portal [https://jwt.io/](https://jwt.io/)  
 
 ## References
 + [IOT Safe GSMA Specification](https://www.gsma.com/iot/iot-safe/)
