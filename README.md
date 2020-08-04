@@ -70,9 +70,9 @@ Alternatively, *CMake* can be used to automatically pull *CppUTest* dependency a
 	make test
 ```
 ## JWT Signing demo
-An example to demonstrate how the IoT Safe Applet can be used to sign JWT token.
+An example app to demonstrate how the IoT Safe Applet can be used to sign JWT token.
 This example uses ECDSA keypair on the SIM/UICC to sign JWT. 
-IoT Safe Applet on the  SIM/UICC is provisioned with a key containers containing ECDSA private (container ID = 01) and public key (Container ID = 02)
+IoT Safe Applet on the  SIM/UICC is provisioned with key containers containing ECDSA private key (container ID = 01) and public key (Container ID = 02)
 ### JWT Sample header and payload
 The following sample header and payload are used in this example
 #### JWT Header:
@@ -89,7 +89,7 @@ The following sample header and payload are used in this example
 ```
 eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IDQyLCJjbGFpbVR5cGUiOiAiY2xhaW1UeXBlIiwiY2xhaW1VcmwiOiJjbGFpbVVybCIgfQ.wMG0sp7BfdGDjvW4nJPE6swwEE0b7UvPmMWiYwa71zuAMuDpRbQasgcz3lls0V0jLh7XjmfnFPahSRs0Eh3OUQ
 ```
-For easy verification of this token , the example app is also retrieving Public Key from UICC and print in on the console
+For easy verification of this token , the example app is also retrieving Public Key from UICC and print it in on the console
 #### e.g Public Key
 ```
 -----BEGIN PUBLIC KEY-----
