@@ -22,7 +22,7 @@
 #include "util.h"
 using namespace std;
 
-static const char* modem_port = (const char*)"/dev/ttyACM0";
+static const char* modem_port = (const char*)"/dev/ttyUSB2"; //"/dev/ttyACM0";
 static GenericModem modem;
 static ROT* _rot = NULL;
 static RotKeyPair _kp;

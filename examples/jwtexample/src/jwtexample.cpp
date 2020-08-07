@@ -21,7 +21,7 @@
 
 
 // Serial Port to which Modem is connected and IoT Safe SIM is plugged in
-static const char* modem_port = (const char*)"/dev/ttyACM0";
+static const char* modem_port = (const char*) "/dev/ttyUSB2"; // "/dev/ttyACM0";
 
  
  
