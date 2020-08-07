@@ -27,7 +27,7 @@ GenericModem::~GenericModem(void) {
 
 bool GenericModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen) {
 	bool ret;
-	
+#ifdef AT_DEBUG	
 	// DEBBUG
 	{
 		uint16_t i;
@@ -42,9 +42,11 @@ bool GenericModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* respon
 		printf("\r\n");
 	}
 	// -----
-	
+#endif	// AT_DEBUG
+
 	ret = _at.sendATCSIM(apdu, apduLen, response, responseLen);
-	
+
+#ifdef AT_DEBUG	
 	// DEBBUG
 	{
 		uint16_t i;
@@ -59,6 +61,7 @@ bool GenericModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* respon
 		printf("\r\n");
 	}
 	// -----
-	
+#endif // AT_DEBUG	
+
 	return ret;
 }
