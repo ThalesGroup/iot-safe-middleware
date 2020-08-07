@@ -43,7 +43,7 @@ void initialize()
     _rot = new ROT();
     _rot->init(&modem);
 
-    if (!_rot->select(true)) {
+    if (!_rot->select(false)) { // true - basic channel, false - new logical channel
         printf("\nError: cannot select applet!\n");
         return;
     }
