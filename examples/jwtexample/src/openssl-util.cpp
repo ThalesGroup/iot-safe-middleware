@@ -277,8 +277,9 @@ int convertDERToCompactSignature(std::vector<uint8_t> sign_in, std::vector<uint8
     if (ecdsa_sig == NULL) {
       return -1;
     }
-    const BIGNUM *r =ECDSA_SIG_get0_r(ecdsa_sig);
-    const BIGNUM *s = ECDSA_SIG_get0_s(ecdsa_sig);
+    const BIGNUM *r = NULL;
+    const BIGNUM *s = NULL;
+    ECDSA_SIG_get0(ecdsa_sig,&r, &s);
     /* Store the two BIGNUMs in raw_buf. */
     r_len = BN_num_bytes(r);
     s_len = BN_num_bytes(s);
