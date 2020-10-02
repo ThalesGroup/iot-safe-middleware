@@ -20,10 +20,12 @@
 #include <stdio.h>
 #include "ROT.h"
 
+
+
+
 /** Constants *******************************************************************/
 // AID for IoTSafe Applet
 static uint8_t AID[] = { 0xA0, 0x00, 0x00, 0x02, 0x48, 0x04, 0x00  };
-
 
 /**
  * Create an instance of ROT
@@ -32,8 +34,6 @@ ROT::ROT(void) : Applet(AID, sizeof(AID)),_keypairs{}
 {
 
 }
-
-
 /** PRIVATE *******************************************************************/
 #define READ_LINE_LEN 255
 int ROT::readFile(const uint8_t *path, uint16_t pathLen,
@@ -41,20 +41,54 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
                   const uint8_t *fileLbl, uint16_t fileLblLen,
                   uint8_t **data, uint16_t *dataLen)
 {
-    int result = ERR_GENERIC;
-    if (!path || data == nullptr)
+    int result, rc = ERR_GENERIC;
+    
+    if (!path)
     {
+        #ifdef APDU_DEBUG
+        printf("Invalid AID path, readfile(...) argument one \r\n");
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
+
+    if(data == nullptr)
+    {
+        #ifdef APDU_DEBUG
+        printf("Invalid data pointer, readfile(...) argument seven \r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(*dataLen <= 0)
+    {
+        #ifdef APDU_DEBUG
+        printf("Invalid data length , readfile(...) argument eigth \r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }  
 
     if (pathLen > CMD_MAX_LEN) {
         return ERR_INVALID_PARAMETERS;
     }
 
-    if (transmit(_channel, 0xA4, 0x04, 0x00, path, pathLen) &&
-        getStatusWord() == SW_EXECUTION_OK)
+    rc = transmit(_channel, 0xA4, 0x04, 0x00, path, pathLen);
+    if(!rc) 
     {
-	uint16_t offset = 0;
+        #ifdef APDU_DEBUG
+        printf("Error while transmitting command\r\n");
+        #endif
+        result = ERR_INVALID_RESPONSE;
+    }
+    else if(getStatusWord() != SW_EXECUTION_OK)
+    {
+        #ifdef APDU_DEBUG
+        printf("There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        result = ERR_INVALID_RESPONSE;
+    }
+    else
+    {
+        uint16_t offset = 0;
         uint8_t toread;
 
         uint16_t cmdLen = fileIdLen + fileLblLen;
@@ -93,7 +127,7 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
         *data = (uint8_t *)malloc((*dataLen + READ_LINE_LEN) * sizeof(uint8_t));
         if (*data == nullptr) 
         {
-	    return ERR_OUT_OF_MEMORY;
+	        return ERR_OUT_OF_MEMORY;
         }
         uint8_t p0 = 0;
         uint8_t p1 = 0;
@@ -108,16 +142,27 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
                 return ERR_INVALID_PARAMETERS;
             }
 
-            if (transmit(_channel, 0xB0, p0, p1, cmd, cmdLen, 0) &&
-                getStatusWord() == SW_EXECUTION_OK)
+            rc = transmit(_channel, 0xB0, p0, p1, cmd, cmdLen, 0);
+            if(!rc)
             {
-                offset += getResponse(&(*data)[offset]);
-                result = ERR_NOERR;
+                #ifdef APDU_DEBUG
+                printf("Error while transmitting command\r\n");
+                #endif
+                result = ERR_INVALID_RESPONSE;
+                break;
+            }
+            else if(getStatusWord() != SW_EXECUTION_OK)
+            {
+                #ifdef APDU_DEBUG
+                printf("There was an error of type: %x\r\n", getStatusWord());
+                #endif
+                result = ERR_INVALID_RESPONSE;
+                break;
             }
             else
             {
-                result = ERR_INVALID_RESPONSE;
-                break;
+                offset += getResponse(&(*data)[offset]);
+                result = ERR_NOERR;
             }
         }
 
@@ -127,6 +172,7 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
             (*data)[offset] = '\0';
             *dataLen += 1;
         }
+        
         else if (*data != nullptr)
         {
             // handle memory
@@ -780,7 +826,18 @@ int ROT::putPublicKeyUpdate(const uint8_t *pubKey, uint16_t pubKeyLen)
 /** Public *******************************************************************/
 int ROT::getCertificateByContainerId(const uint8_t *containerId, uint16_t containerIdLen, uint8_t **cert, uint16_t *certLen)
 {
-    	printf("getCertificateByContainerId 1\r\n");
+    if(*containerId <= 0)
+    {
+         printf("Container ID cannot be negative or zero: %d", *containerId);
+         return ERR_INVALID_PARAMETERS;
+    }
+    if(containerIdLen <= 0)
+    {
+        printf("Container ID Length cannot be negative or zero: %d", containerIdLen);
+        return ERR_INVALID_PARAMETERS;
+    }
+   
+    printf("getCertificateByContainerId 1\r\n");
 	return readFile(const_cast<uint8_t *>(AID), sizeof AID, containerId, containerIdLen, nullptr, 0, cert, certLen);
 }
 
