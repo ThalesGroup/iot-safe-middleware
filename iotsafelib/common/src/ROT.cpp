@@ -46,15 +46,23 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
     if (!path)
     {
         #ifdef APDU_DEBUG
-        printf("Invalid AID path, readfile(...) argument one \r\n");
+        printf("ReadFile - AID cannot be null\r\n");
         #endif
         return ERR_INVALID_PARAMETERS;
     }
 
-    if(data == nullptr)
+    if(!data)
     {
         #ifdef APDU_DEBUG
-        printf("Invalid data pointer, readfile(...) argument seven \r\n");
+        printf("ReadFile - 'data' cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!dataLen) 
+    {
+        #ifdef APDU_DEBUG
+        printf("ReadFile - 'dataLen' cannot be null\r\n");
         #endif
         return ERR_INVALID_PARAMETERS;
     }
@@ -62,12 +70,16 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
     if(*dataLen <= 0)
     {
         #ifdef APDU_DEBUG
-        printf("Invalid data length , readfile(...) argument eigth \r\n");
+        printf("ReadFile - 'dataLen' cannot negative or zero\r\n");
         #endif
         return ERR_INVALID_PARAMETERS;
     }  
 
     if (pathLen > CMD_MAX_LEN) {
+
+        #ifdef APDU_DEBUG
+        printf("ReadFile - AID length %d cannot be above %d \r\n", pathLen, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
@@ -75,14 +87,14 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
     if(!rc) 
     {
         #ifdef APDU_DEBUG
-        printf("Error while transmitting command\r\n");
+        printf("ReadFile - Error while transmitting command\r\n");
         #endif
         result = ERR_INVALID_RESPONSE;
     }
     else if(getStatusWord() != SW_EXECUTION_OK)
     {
         #ifdef APDU_DEBUG
-        printf("There was an error of type: %x\r\n", getStatusWord());
+        printf("ReadFile - There was an error of type: %x\r\n", getStatusWord());
         #endif
         result = ERR_INVALID_RESPONSE;
     }
@@ -97,6 +109,9 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
 
         if (cmdLen > CMD_MAX_LEN)
         {
+            #ifdef APDU_DEBUG
+            printf("ReadFile - 'cmdLen' %d cannot be above %d \r\n", cmdLen, CMD_MAX_LEN);
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         uint8_t cmd[CMD_MAX_LEN];
@@ -105,6 +120,9 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
         {
             if (!fileId)
             {
+                #ifdef APDU_DEBUG
+                printf("ReadFile - 'fileId' cannot be null \r\n");
+                #endif
                 return ERR_INVALID_PARAMETERS;
             }
             cmd[index++] = 0x83;
@@ -116,6 +134,9 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
         {
             if (!fileLbl)
             {
+                #ifdef APDU_DEBUG
+                printf("ReadFile - 'fileLbl' cannot be null \r\n");
+                #endif
                 return ERR_INVALID_PARAMETERS;
             }
             cmd[index++] = 0x73;
@@ -139,6 +160,10 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
             p1 = offset & 0xFF;
 
             if (cmdLen > CMD_MAX_LEN) {
+                
+                #ifdef APDU_DEBUG
+                printf("ReadFile - 'cmdLen' %d cannot be above %d \r\n", cmdLen, CMD_MAX_LEN);
+                #endif
                 return ERR_INVALID_PARAMETERS;
             }
 
@@ -146,7 +171,7 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
             if(!rc)
             {
                 #ifdef APDU_DEBUG
-                printf("Error while transmitting command\r\n");
+                printf("ReadFile - Error while transmitting command\r\n");
                 #endif
                 result = ERR_INVALID_RESPONSE;
                 break;
@@ -154,7 +179,7 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
             else if(getStatusWord() != SW_EXECUTION_OK)
             {
                 #ifdef APDU_DEBUG
-                printf("There was an error of type: %x\r\n", getStatusWord());
+                printf("ReadFile - There was an error of type: %x\r\n", getStatusWord());
                 #endif
                 result = ERR_INVALID_RESPONSE;
                 break;
@@ -185,16 +210,59 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
 
 int ROT::getRandom(uint8_t *data, uint16_t dataLen)
 {
-    int result = ERR_INVALID_RESPONSE;
+    int result, rc = ERR_INVALID_RESPONSE;
     if (dataLen > CMD_MAX_LEN) {
+
+        #ifdef APDU_DEBUG
+        printf("getRandom - 'dataLen' %d cannot be above %d \r\n", dataLen, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
-    if ((transmit(_channel, 0x84, 0x00, 0x00, dataLen) == true) &&
-        (getStatusWord() == SW_EXECUTION_OK || getStatusWord() == SW_NO_INFOMATION_GIVEN) &&
-        (getResponse(data) == dataLen))
+    if(dataLen <= 0)
     {
-        return ERR_NOERR;
+        #ifdef APDU_DEBUG
+        printf("getRandom - 'dataLen' %d cannot be negative or zero\r\n", dataLen);
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!data)
+    {
+        #ifdef APDU_DEBUG
+        printf("getRandom - 'data' cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    rc = transmit(_channel, 0x84, 0x00, 0x00, dataLen);
+    if(!rc)
+    {
+        #ifdef APDU_DEBUG
+        printf("getRandom - Error while transmitting command\r\n");
+        #endif
+        result = ERR_INVALID_RESPONSE;
+    }
+    else if(getStatusWord() != SW_EXECUTION_OK && getStatusWord() != SW_NO_INFOMATION_GIVEN)
+    {
+        #ifdef APDU_DEBUG
+        printf("getRandom - There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        result = ERR_INVALID_RESPONSE;
+    }
+    else
+    {
+        if(getResponse(data) == dataLen)
+        {
+            return ERR_NOERR;
+        }
+        else
+        {
+            #ifdef APDU_DEBUG
+            printf("getRandom - There was an error while getResponse of type: %x\r\n", getStatusWord());
+            #endif
+            result = ERR_INVALID_RESPONSE;
+        }
     }
     return result;
 }
@@ -205,21 +273,76 @@ int ROT::generateKeypair(const uint8_t *keyId, uint16_t keyIdLen,
                          uint8_t *pubKeyId, uint16_t *pubKeyIdLen,
                          uint8_t *pubKeyData, uint16_t *pubKeyDataLen)
 {
-    int result = ERR_GENERIC;
+    int result, rc = ERR_GENERIC;
     // Construct command
     uint16_t cmdLen = keyIdLen + keyLblLen;
     cmdLen += (keyIdLen > 0) ? 2 : 0;  // + tag length
     cmdLen += (keyLblLen > 0) ? 2 : 0; // + tag length
     if (cmdLen > CMD_MAX_LEN)
     {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'cmdLen' %d cannot be above %d \r\n", cmdLen, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
+
+    if(!privKeyId)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'privKeyId' %d cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!privKeyIdLen)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'privKeyIdLen' %d cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!pubKeyId)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'pubKeyId' %d cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!pubKeyIdLen)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'pubKeyIdLen' %d cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+    
+    if(!pubKeyData)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'pubKeyData' %d cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!pubKeyDataLen)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'pubKeyDataLen' %d cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
     uint8_t cmd[CMD_MAX_LEN];
     uint16_t index = 0;
     if (keyIdLen > 0)
     {
         if (!keyId)
         {
+            #ifdef APDU_DEBUG
+            printf("generateKeypair - 'keyId' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x84;
@@ -231,6 +354,9 @@ int ROT::generateKeypair(const uint8_t *keyId, uint16_t keyIdLen,
     {
         if (!keyLbl)
         {
+            #ifdef APDU_DEBUG
+            printf("generateKeypair - 'keyLbl' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x74;
@@ -240,12 +366,30 @@ int ROT::generateKeypair(const uint8_t *keyId, uint16_t keyIdLen,
     }
 
     if (cmdLen > CMD_MAX_LEN) {
+
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - 'cmdLen' %d cannot be above %d \r\n", cmdLen, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
     
     // Send command
-    if (transmit(_channel, 0xB9, 0x00, 0x00, cmd, cmdLen, 0x00) &&
-        getStatusWord() == SW_EXECUTION_OK)
+    rc = transmit(_channel, 0xB9, 0x00, 0x00, cmd, cmdLen, 0x00);
+    if(!rc)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - Error while transmitting command\r\n");
+        #endif
+        result = ERR_INVALID_RESPONSE;
+    }
+    else if(getStatusWord() != SW_EXECUTION_OK)
+    {
+        #ifdef APDU_DEBUG
+        printf("generateKeypair - There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        result = ERR_INVALID_RESPONSE;
+    }
+    else
     {
         uint16_t dataLen = getResponseLength();
         uint8_t *data = (uint8_t *)malloc(dataLen * sizeof(uint8_t));
@@ -294,13 +438,16 @@ int ROT::computeSignatureInit(const uint8_t *keyId, uint16_t keyIdLen,
                               const uint8_t *keyLbl, uint16_t keyLblLen,
                               uint8_t operationMode, uint16_t hashAlgo, uint8_t signAlgo)
 {
-    int result = ERR_GENERIC;
+    int result, rc = ERR_GENERIC;
     // Construct command
     uint16_t cmdLen = keyIdLen + keyLblLen + 3 + 4 + 3; // 3 for TLV tag and len
     cmdLen += (keyIdLen > 0) ? 2 : 0;                   // + tag length
     cmdLen += (keyLblLen > 0) ? 2 : 0;                  // + tag length
     if (cmdLen > CMD_MAX_LEN)
     {
+        #ifdef APDU_DEBUG
+        printf("computeSignatureInit - 'cmdLen' %d cannot be above %d \r\n", cmdLen, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_LENGTH;
     }
     uint8_t cmd[CMD_MAX_LEN];
@@ -309,6 +456,9 @@ int ROT::computeSignatureInit(const uint8_t *keyId, uint16_t keyIdLen,
     {
         if (!keyId)
         {
+             #ifdef APDU_DEBUG
+             printf("computeSignatureInit - 'keyId' cannot be null \r\n");
+             #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x84;
@@ -320,6 +470,9 @@ int ROT::computeSignatureInit(const uint8_t *keyId, uint16_t keyIdLen,
     {
         if (!keyLbl)
         {
+            #ifdef APDU_DEBUG
+             printf("computeSignatureInit - 'keyLbl' cannot be null \r\n");
+             #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x74;
@@ -342,22 +495,31 @@ int ROT::computeSignatureInit(const uint8_t *keyId, uint16_t keyIdLen,
     cmd[index++] = signAlgo;
 
     if (cmdLen > CMD_MAX_LEN) {
+        #ifdef APDU_DEBUG
+        printf("computeSignatureInit - 'cmdLen' %d cannot be above %d \r\n", cmdLen, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
-    //TODO:Check
     // Send command
-    if (transmit(_channel, 0x2A, 0x00, 0x00, cmd, cmdLen))
+    rc = transmit(_channel, 0x2A, 0x00, 0x00, cmd, cmdLen);
+    if(!rc)
     {
-        if (getStatusWord() == SW_EXECUTION_OK)
-        {
-            result = ERR_NOERR;
-        }
-        else
-        {
-            result = ERR_INVALID_PARAMETERS;
-        }
+        #ifdef APDU_DEBUG
+        printf("computeSignatureInit - Error while transmitting command\r\n");
+        #endif
+        result = ERR_INVALID_PARAMETERS;
     }
+    else if(getStatusWord() != SW_EXECUTION_OK)
+    {
+        #ifdef APDU_DEBUG
+        printf("computeSignatureInit - There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        result = ERR_INVALID_RESPONSE;
+    }
+    else
+        result = ERR_NOERR;
+   
     return result;
 }
 
@@ -434,13 +596,24 @@ int ROT::computeSignatureUpdate(uint8_t operationMode,
                                 uint32_t hashedBytes,
                                 uint8_t *sign, uint16_t *signLen)
 {
-    int result = ERR_GENERIC;
+    int result, rc = ERR_GENERIC;
     uint8_t cmd[CMD_MAX_LEN];
     uint8_t response[512];
     uint16_t index = 0;
 
     if (data == nullptr) 
     {
+        #ifdef APDU_DEBUG
+        printf("computeSignatureUpdate - 'data' cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!signLen)
+    {
+        #ifdef APDU_DEBUG
+        printf("computeSignatureUpdate - 'signLen' cannot be null\r\n");
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
@@ -463,10 +636,21 @@ int ROT::computeSignatureUpdate(uint8_t operationMode,
             while (dataOffset < dataLen) {
                 memcpy(cmd, data + dataOffset, CMD_MAX_LEN);
                 if(transmit(0x00, 0x2B, 0x00, 0x00, cmd, CMD_MAX_LEN, 0x00)) {
-                    if(getStatusWord() != 0x9000) {
+                    if(getStatusWord() != SW_EXECUTION_OK) {
+                        #ifdef APDU_DEBUG
+                        printf("computeSignatureUpdate (multi command) - There was an error of type: %x\r\n", getStatusWord());
+                        #endif
                         return ERR_INVALID_RESPONSE;
                     }
                 }
+                else
+                {
+                    #ifdef APDU_DEBUG
+                    printf("computeSignatureUpdate (multi command) - Error while transmitting command\r\n");
+                    #endif
+                    return ERR_INVALID_RESPONSE;
+                }
+                
                 dataOffset += CMD_MAX_LEN;
             }
             // Last command
@@ -478,12 +662,18 @@ int ROT::computeSignatureUpdate(uint8_t operationMode,
     } else if (operationMode == OPERATION_MODE_LAST_BLOCK) {
         if (intermediateHash == nullptr) 
         {
+            #ifdef APDU_DEBUG
+            printf("computeSignatureUpdate - 'intermediateHash' cannot be null \r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
 	// Construct command 
         //// Last block to hash
         cmd[index++] = 0x9A;
         if (dataLen > 0x80) {
+            #ifdef APDU_DEBUG
+            printf("computeSignatureUpdate - 'dataLen' invalid length (>0x80) \r\n");
+            #endif
             return ERR_INVALID_LENGTH;
         }
         cmd[index++] = dataLen;
@@ -492,6 +682,9 @@ int ROT::computeSignatureUpdate(uint8_t operationMode,
         //// Intermediate hash
         cmd[index++] = 0x9C;
         if (intermediateHashLen < 0x20 || intermediateHashLen > 0x40) {
+            #ifdef APDU_DEBUG
+            printf("computeSignatureUpdate - 'intermediateHashLen' out of range\r\n");
+            #endif
             return ERR_INVALID_LENGTH;
         }
         cmd[index++] = intermediateHashLen;
@@ -508,26 +701,38 @@ int ROT::computeSignatureUpdate(uint8_t operationMode,
         // Construct command 
         cmd[index++] = 0x9E;
         if (dataLen > 0x40) {
+            #ifdef APDU_DEBUG
+            printf("computeSignatureUpdate - 'dataLen' invalid length (>0x40) \r\n");
+            #endif
             return ERR_INVALID_LENGTH;
         }
         cmd[index++] = dataLen;
         memcpy(cmd+index, data, dataLen);
         index += dataLen;
     } else {
+        #ifdef APDU_DEBUG
+        printf("computeSignatureUpdate - invalid operation \r\n");
+        #endif
         return ERR_INVALID_OPERATION;
     }
 
     // Send command
-    if(transmit(0x00, 0x2B, 0x80, 0x00, cmd, index, 0x00)) {
-        if(getStatusWord() == 0x9000) {
+    if(transmit(0x00, 0x2B, 0x80, 0x00, cmd, index, 0x00)) 
+    {
+        if(getStatusWord() == SW_EXECUTION_OK) 
+        {
             getResponse(response);
             uint32_t length = 0;
-            if (response[0] != 0x33) {
+            if (response[0] != 0x33) 
+            {
                 return ERR_INVALID_RESPONSE;
             }
-	    if(sign == nullptr) 
+	        if(sign == nullptr) 
             {
-            	return ERR_INVALID_PARAMETERS;
+                #ifdef APDU_DEBUG
+                printf("computeSignatureUpdate - 'sign' cannot be null \r\n");
+                #endif
+                return ERR_INVALID_PARAMETERS;
             }
             uint8_t numOfBytes = tlvParserLength(response + 1, &length);
             uint8_t* respSign = response + 1 + numOfBytes;
@@ -555,6 +760,21 @@ int ROT::computeSignatureUpdate(uint8_t operationMode,
             *signLen = index;
             result = ERR_NOERR;
         }
+        else
+        {
+            #ifdef APDU_DEBUG
+            printf("computeSignatureUpdate - There was an error of type: %x\r\n", getStatusWord());
+            #endif
+            result = ERR_INVALID_RESPONSE;
+        }
+    }
+    else
+    {
+        #ifdef APDU_DEBUG
+        printf("computeSignatureUpdate - Error while transmitting command\r\n");
+        #endif
+        result = ERR_INVALID_RESPONSE;
+
     }
     return result;
 }
@@ -566,13 +786,34 @@ int ROT::computeDH(const uint8_t *privKeyId, uint16_t privKeyIdLen,
                    uint8_t *sharedSecret, uint16_t *sharedSecretLen)
 {
     bool result = ERR_INVALID_RESPONSE;
+    int rc = ERR_INVALID_RESPONSE;
     uint8_t cmd[CMD_MAX_LEN];
     uint16_t index = 0;
+
+    if(!sharedSecret)
+    {
+        #ifdef APDU_DEBUG
+        printf("computeDH - 'sharedSecret' cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    if(!sharedSecretLen)
+    {
+        #ifdef APDU_DEBUG
+        printf("computeDH - 'sharedSecretLen' cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+
+    }
 
     if (privKeyIdLen > 0)
     {
         if (!privKeyId)
         {
+            #ifdef APDU_DEBUG
+            printf("computeDH - 'privKeyId' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x84;
@@ -584,6 +825,9 @@ int ROT::computeDH(const uint8_t *privKeyId, uint16_t privKeyIdLen,
     {
         if (!pubKeyId)
         {
+            #ifdef APDU_DEBUG
+            printf("computeDH - 'pubKeyId' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x85;
@@ -595,6 +839,9 @@ int ROT::computeDH(const uint8_t *privKeyId, uint16_t privKeyIdLen,
     {
         if (!privLbl)
         {
+            #ifdef APDU_DEBUG
+            printf("computeDH - 'privLbl' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x74;
@@ -606,6 +853,9 @@ int ROT::computeDH(const uint8_t *privKeyId, uint16_t privKeyIdLen,
     {
         if (!pubLbl)
         {
+            #ifdef APDU_DEBUG
+            printf("computeDH - 'pubLbl' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x75;
@@ -615,12 +865,29 @@ int ROT::computeDH(const uint8_t *privKeyId, uint16_t privKeyIdLen,
     }
 
     if (index > CMD_MAX_LEN) {
+        #ifdef APDU_DEBUG
+        printf("computeDH - 'index' %d cannot be above %d \r\n", index, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
     // Send command
-    if (transmit(_channel, 0x46, 0x00, 0x00, cmd, index, 0x00) &&
-        getStatusWord() == SW_EXECUTION_OK)
+    rc = transmit(_channel, 0x46, 0x00, 0x00, cmd, index, 0x00);
+    if(!rc)
+    {
+        #ifdef APDU_DEBUG
+        printf("ComputeDH - Error while transmitting command\r\n");
+        #endif
+        return ERR_INVALID_RESPONSE;
+    }
+    else if(getStatusWord() != SW_EXECUTION_OK)
+    {
+        #ifdef APDU_DEBUG
+        printf("computeDH - There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        return ERR_INVALID_RESPONSE;
+    }
+    else
     {
         *sharedSecretLen = getResponse(sharedSecret);
         if (*sharedSecretLen > 0)
@@ -641,13 +908,25 @@ int ROT::computePRF(uint8_t mode,
                     uint8_t *pRandom, uint16_t pRandomLen)
 {
     bool result = ERR_INVALID_RESPONSE;
+    int rc = ERR_INVALID_RESPONSE;
     uint8_t cmd[CMD_MAX_LEN];
     uint16_t index = 0;
+
+    if(!pRandom)
+    {
+        #ifdef APDU_DEBUG
+        printf("computePRF - 'pRandom' cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
 
     if (secretIdLen > 0)
     {
         if (!secretId)
         {
+            #ifdef APDU_DEBUG
+            printf("computePRF - 'secretId' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x86;
@@ -659,6 +938,9 @@ int ROT::computePRF(uint8_t mode,
     {
         if (!secretLbl)
         {
+            #ifdef APDU_DEBUG
+            printf("computePRF - 'secretLbl' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x76;
@@ -670,6 +952,9 @@ int ROT::computePRF(uint8_t mode,
     {
         if (!secret)
         {
+            #ifdef APDU_DEBUG
+            printf("computePRF - 'secret' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0xD1;
@@ -681,6 +966,9 @@ int ROT::computePRF(uint8_t mode,
     {
         if (!pms)
         {
+            #ifdef APDU_DEBUG
+            printf("computePRF - 'pms' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0xD4;
@@ -691,6 +979,15 @@ int ROT::computePRF(uint8_t mode,
     // Construct lable and seed
     cmd[index++] = 0xD2;
     cmd[index++] = lblSeedLen;
+
+    if(!lblSeed)
+    {
+        #ifdef APDU_DEBUG
+        printf("computePRF - 'lblSeed' cannot be null\r\n");
+        #endif
+        return ERR_INVALID_PARAMETERS;
+    }
+
     memcpy(cmd + index, lblSeed, lblSeedLen);
     index += lblSeedLen;
     // construct pseudo random length
@@ -699,12 +996,29 @@ int ROT::computePRF(uint8_t mode,
     cmd[index++] = pRandomLen;
 
     if (index > CMD_MAX_LEN) {
+        #ifdef APDU_DEBUG
+        printf("computePRF - 'index' %d cannot be above %d \r\n", index, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
     // Send command
-    if (transmit(_channel, 0x48, mode, 0x00, cmd, index, 0x00) &&
-        getStatusWord() == SW_EXECUTION_OK)
+    rc = transmit(_channel, 0x48, mode, 0x00, cmd, index, 0x00);
+    if(!rc)
+    {
+        #ifdef APDU_DEBUG
+        printf("ComputePRF - Error while transmitting command\r\n");
+        #endif
+        return ERR_INVALID_RESPONSE;
+    }
+    else if(getStatusWord() != SW_EXECUTION_OK)
+    {
+        #ifdef APDU_DEBUG
+        printf("ComputePRF - There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        return ERR_INVALID_RESPONSE;
+    }
+    else
     {
         int length = getResponse(pRandom);
         if (length == pRandomLen)
@@ -720,6 +1034,7 @@ int ROT::putPublicKeyInit(const uint8_t *pubKeyId, uint16_t pubKeyIdLen,
                           const uint8_t *pubKeyLbl, uint16_t pubKeyLblLen)
 {
     bool result = ERR_INVALID_RESPONSE;
+    int rc = ERR_INVALID_RESPONSE;
     uint8_t cmd[CMD_MAX_LEN];
     uint16_t index = 0;
 
@@ -727,6 +1042,9 @@ int ROT::putPublicKeyInit(const uint8_t *pubKeyId, uint16_t pubKeyIdLen,
     {
         if (!pubKeyId)
         {
+            #ifdef APDU_DEBUG
+            printf("putPublicKeyInit - 'pubKeyId' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x85;
@@ -738,6 +1056,9 @@ int ROT::putPublicKeyInit(const uint8_t *pubKeyId, uint16_t pubKeyIdLen,
     {
         if (!pubKeyLbl)
         {
+            #ifdef APDU_DEBUG
+            printf("putPublicKeyInit - 'pubKeyLbl' cannot be null\r\n");
+            #endif
             return ERR_INVALID_PARAMETERS;
         }
         cmd[index++] = 0x75;
@@ -747,27 +1068,46 @@ int ROT::putPublicKeyInit(const uint8_t *pubKeyId, uint16_t pubKeyIdLen,
     }
 
     if (index > CMD_MAX_LEN) {
+        #ifdef APDU_DEBUG
+        printf("putPublicKeyInit - 'index' %d cannot be above %d \r\n", index, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
     // Send command
-    if (transmit(_channel, 0x24, 0x00, 0x00, cmd, index, 0x00) &&
-        getStatusWord() == SW_EXECUTION_OK)
+    rc = transmit(_channel, 0x24, 0x00, 0x00, cmd, index, 0x00);
+    if(!rc)
     {
-        return ERR_NOERR;
+        #ifdef APDU_DEBUG
+        printf("putPublicKeyInit - Error while transmitting command\r\n");
+        #endif
+        return ERR_INVALID_RESPONSE;
     }
-
+    else if(getStatusWord() != SW_EXECUTION_OK)
+    {
+        #ifdef APDU_DEBUG
+        printf("putPublicKeyInit - There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        return  ERR_INVALID_RESPONSE;
+    }
+    else
+        return ERR_NOERR;
+    
     return result;
 }
 
 int ROT::putPublicKeyUpdate(const uint8_t *pubKey, uint16_t pubKeyLen)
 {
     bool result = ERR_INVALID_RESPONSE;
+    int rc = ERR_INVALID_RESPONSE;
     uint8_t cmd[CMD_MAX_LEN];
     uint16_t index = 0;
     // Null pointer checking
     if (!pubKey)
     {
+        #ifdef APDU_DEBUG
+        printf("putPublicKeyUpdate - 'pubKey' cannot be null\r\n");
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
@@ -795,8 +1135,18 @@ int ROT::putPublicKeyUpdate(const uint8_t *pubKey, uint16_t pubKeyLen)
             {
                 if (getStatusWord() != SW_EXECUTION_OK)
                 {
+                    #ifdef APDU_DEBUG
+                    printf("putPublicKeyUpdate (multi command) - There was an error of type: %x\r\n", getStatusWord());
+                    #endif
                     return ERR_INVALID_RESPONSE;
                 }
+            }
+            else
+            {
+                #ifdef APDU_DEBUG
+                printf("putPublicKeyUpdate (multi command) - Error while transmitting command\r\n");
+                #endif
+                return ERR_INVALID_RESPONSE;
             }
             dataOffset += CMD_MAX_LEN;
         }
@@ -810,34 +1160,37 @@ int ROT::putPublicKeyUpdate(const uint8_t *pubKey, uint16_t pubKeyLen)
     }
 
     if (index > CMD_MAX_LEN) {
+        #ifdef APDU_DEBUG
+        printf("putPublicKeyUpdate - 'index' %d cannot be above %d \r\n", index, CMD_MAX_LEN);
+        #endif
         return ERR_INVALID_PARAMETERS;
     }
 
     // Send command
-    if (transmit(_channel, 0xD8, 0x80, 0x00, cmd, index, 0x00) &&
-        getStatusWord() == SW_EXECUTION_OK)
+    rc = transmit(_channel, 0xD8, 0x80, 0x00, cmd, index, 0x00);
+    if(!rc)
     {
-        return ERR_NOERR;
+        #ifdef APDU_DEBUG
+        printf("putPublicKeyUpdate - Error while transmitting command\r\n");
+        #endif
+        return ERR_INVALID_RESPONSE;
     }
+    else if(getStatusWord() != SW_EXECUTION_OK)
+    {
+        #ifdef APDU_DEBUG
+        printf("putPublicKeyUpdate - There was an error of type: %x\r\n", getStatusWord());
+        #endif
+        return ERR_INVALID_RESPONSE;
+    }
+    else
+        return ERR_NOERR;
 
     return result;
 }
 
 /** Public *******************************************************************/
 int ROT::getCertificateByContainerId(const uint8_t *containerId, uint16_t containerIdLen, uint8_t **cert, uint16_t *certLen)
-{
-    if(*containerId <= 0)
-    {
-         printf("Container ID cannot be negative or zero: %d", *containerId);
-         return ERR_INVALID_PARAMETERS;
-    }
-    if(containerIdLen <= 0)
-    {
-        printf("Container ID Length cannot be negative or zero: %d", containerIdLen);
-        return ERR_INVALID_PARAMETERS;
-    }
-   
-    printf("getCertificateByContainerId 1\r\n");
+{  
 	return readFile(const_cast<uint8_t *>(AID), sizeof AID, containerId, containerIdLen, nullptr, 0, cert, certLen);
 }
 
