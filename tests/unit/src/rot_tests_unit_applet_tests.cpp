@@ -199,22 +199,19 @@ TEST(AppletTests, PutServerPublicKey) {
     IOT_DEBUG("\n-->Success \n");
 }
 
-
 TEST(AppletTests, VerifySignature) {
     IOT_DEBUG("\n-->Running AppletTests - VerifySignature\n");
     uint32_t rot_algo = ROT_ALGO_SHA256_WITH_ECDSA;
     uint8_t keyId[CONTAINER_ID_LENGTH] = {CONTAINER_ID_KEY};
     
     int result = _rot->signInit(keyId, CONTAINER_ID_LENGTH, rot_algo);
-    IOT_DEBUG("\n-->Running AppletTests - VerifySignature: SignInit\n");
     CHECK_EQUAL(0, result);
 
     uint8_t hash[] = {0x77, 0x12, 0xaa, 0xe3, 0xbb, 0xaa, 0xe5, 0xc0, 0x07, 0x47, 0x5a, 0x73, 0x36, 0xf3, 0xdd, 0xe0,
                      0xbc, 0x63, 0x38, 0x0a, 0x34, 0x8d, 0x23, 0x90, 0xc3, 0x51, 0x9e, 0x78, 0x2e, 0x9a, 0x82, 0x98};
     uint16_t hashLen = 0x20;
     uint16_t signLen = 0x60;
-    uint8_t signature[0x60];      
-    IOT_DEBUG("\n-->Running AppletTests - VerifySignature: SignFinal\n");           
+    uint8_t signature[0x60];                 
     result = _rot->signFinal(hash, hashLen, signature, &signLen);
     CHECK_EQUAL(0, result);
     printByteArray("Signature", signature, signLen);
@@ -222,6 +219,93 @@ TEST(AppletTests, VerifySignature) {
     IOT_DEBUG("\n-->Success \n");
 }
 
+/*Parameter check and debug msg*/
+TEST(AppletTests, GenerateRandom_null_pointer) {
+    IOT_DEBUG("\n-->Running AppletTests (parameter check and debug msg) - GenerateRandom\n");
+    uint16_t output_len = 32;
+    uint8_t* output = nullptr; //null ptr
+
+    int result = _rot->generateRandom(output, output_len);
+    CHECK_TRUE(result == ERR_INVALID_PARAMETERS);
+    IOT_DEBUG("\n-->Success \n");
+}
+TEST(AppletTests, GenerateRandom_zero_len) {
+    IOT_DEBUG("\n-->Running AppletTests (parameter check and debug msg) - GenerateRandom\n");
+    uint16_t output_len = 0;
+    uint8_t* output = nullptr; //null ptr
+
+    int result = _rot->generateRandom(output, output_len);
+    CHECK_TRUE(result == ERR_INVALID_PARAMETERS);
+    IOT_DEBUG("\n-->Success \n");
+}
+TEST(AppletTests, VerifySignature_null_pointer) {
+    IOT_DEBUG("\n-->Running AppletTests (parameter check and debug msg) - VerifySignature\n");
+    uint32_t rot_algo = ROT_ALGO_SHA256_WITH_ECDSA;
+    uint8_t keyId[CONTAINER_ID_LENGTH] = {CONTAINER_ID_KEY};
+    
+    int result = _rot->signInit(keyId, CONTAINER_ID_LENGTH, rot_algo);
+    CHECK_EQUAL(0, result);
+
+    uint8_t hash[] = {0x77, 0x12, 0xaa, 0xe3, 0xbb, 0xaa, 0xe5, 0xc0, 0x07, 0x47, 0x5a, 0x73, 0x36, 0xf3, 0xdd, 0xe0,
+                     0xbc, 0x63, 0x38, 0x0a, 0x34, 0x8d, 0x23, 0x90, 0xc3, 0x51, 0x9e, 0x78, 0x2e, 0x9a, 0x82, 0x98};
+    uint16_t hashLen = 0x20;
+    uint16_t* signLen = nullptr; //null ptr
+    uint8_t signature[0x60];                 
+    result = _rot->signFinal(hash, hashLen, signature, signLen);
+    CHECK_TRUE(result == ERR_INVALID_PARAMETERS);
+
+    IOT_DEBUG("\n-->Success \n");
+}
+
+TEST(AppletTests, GenerateKeypair_shared_secret_null) {
+    IOT_DEBUG("\n-->Running AppletTests (parameter check and debug msg) - GenerateKeypair\n");
+    
+    int result = 0;
+   
+    uint8_t* sharedSecret = nullptr; //null ptr
+    uint16_t sharedSecretLen = 0x60;
+
+    uint8_t clEph[CONTAINER_ID_LENGTH] = {CONTAINER_ID_CLIENT_EPHEMERAL_KEY};
+    uint8_t svrEph[CONTAINER_ID_LENGTH] = {CONTAINER_ID_SERVER_EPHEMERAL_KEY};
+    result = _rot->computeDHforKeypair(clEph, CONTAINER_ID_LENGTH, svrEph, CONTAINER_ID_LENGTH, sharedSecret, &sharedSecretLen);
+
+    CHECK_TRUE(result == ERR_INVALID_PARAMETERS);
+
+    IOT_DEBUG("\n-->Success \n");
+}
+
+TEST(AppletTests, GenerateKeypair_shared_secret_len_null) {
+    IOT_DEBUG("\n-->Running AppletTests (parameter check and debug msg) - GenerateKeypair\n");
+    
+    int result = 0;
+   
+    uint8_t sharedSecret[0x60];
+    uint16_t* sharedSecretLen = nullptr; //null ptr
+
+    uint8_t clEph[CONTAINER_ID_LENGTH] = {CONTAINER_ID_CLIENT_EPHEMERAL_KEY};
+    uint8_t svrEph[CONTAINER_ID_LENGTH] = {CONTAINER_ID_SERVER_EPHEMERAL_KEY};
+    result = _rot->computeDHforKeypair(clEph, CONTAINER_ID_LENGTH, svrEph, CONTAINER_ID_LENGTH, sharedSecret, sharedSecretLen);
+
+    CHECK_TRUE(result == ERR_INVALID_PARAMETERS);
+
+    IOT_DEBUG("\n-->Success \n");
+}
+TEST(AppletTests, ComputePRF_data_null) {
+    IOT_DEBUG("\n-->Running AppletTests (parameter check and debug msg) - ComputePRF\n");
+
+    uint16_t dataLen = 0xFF;
+    uint8_t* data = nullptr; //null ptr
+
+    string label1 = "extended master secret";
+
+    int result = _rot->computePRFwithSecret((uint8_t*)TEST_SECRET1, sizeof(TEST_SECRET1),
+                            (uint8_t*)label1.c_str(), label1.length(),
+                            (uint8_t*)TEST_SEED1, sizeof(TEST_SEED1),
+                            data, dataLen);
+    CHECK_TRUE(result == ERR_INVALID_PARAMETERS);
+    IOT_DEBUG("\n-->Success \n");
+}
+   
 
 
 
