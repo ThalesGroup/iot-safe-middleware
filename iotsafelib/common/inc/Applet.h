@@ -72,6 +72,10 @@ class Applet {
 	 */
 	bool select(bool isBasic = true);
 
+	void deselect(int);
+
+
+	void check_applet_available();
 	/**
 	 * Deselect the applet by closing the channel opened during the
 	 * select phase.

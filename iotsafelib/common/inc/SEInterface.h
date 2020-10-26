@@ -52,6 +52,7 @@
 #define SW_NO_INFOMATION_GIVEN					0x6300
 #define SW_EXECUTION_OK						0x9000
 #define SW_OK							0x9100
+#define CONDITION_NOT_SATISFIED 		0x6985
 
 
 #define SW1_DATA_AVAILABLE					0x61

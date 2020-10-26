@@ -99,20 +99,24 @@ bool Applet::select(bool isBasic /* = true */)
         {
             _channel = 1;
 
-            if(_seiface->transmit(0x00, 0x70, 0x00, 0x00, 0x01) == ERR_NOERR) {
-		if(_seiface->getStatusWord() == SW_EXECUTION_OK) {
-			_seiface->getResponse(&_channel);
-			if(_seiface->transmit(0x00 | _channel, 0xA4, 0x04, 0x00, _aid, _aidLen) == ERR_NOERR) {
-				if((_seiface->getStatusWord() == SW_EXECUTION_OK) || ((_seiface->getStatusWord() & 0xFF00) == SW_DATA_AVAILABLE)) {
-					_isSelected = true;
-					_isBasic = false;
-					return true;
-				}
-			}
+            if(_seiface->transmit(0x00, 0x70, 0x00, 0x00, 0x01) == ERR_NOERR) 
+            {
+		        if(_seiface->getStatusWord() == SW_EXECUTION_OK) 
+                {
+			        _seiface->getResponse(&_channel);
+                    if(_seiface->transmit(0x00 | _channel, 0xA4, 0x04, 0x00, _aid, _aidLen) == ERR_NOERR) 
+                    {
+                        if((_seiface->getStatusWord() == SW_EXECUTION_OK) || ((_seiface->getStatusWord() & 0xFF00) == SW_DATA_AVAILABLE)) 
+                        {
+                            _isSelected = true;
+                            _isBasic = false;
+                            return true;
+                        }
+                    }
 					
-			_seiface->transmit(0x00, 0x70, 0x80, _channel);
-		}
-	    }
+			        _seiface->transmit(0x00, 0x70, 0x80, _channel);
+		        }
+	        }
         }
     }
 	
@@ -149,6 +153,59 @@ bool Applet::deselect(void)
     }
     return _isSelected;
 }
+
+/**
+* Detect if a secure channel needs to be closed for the applet to be selected successfully.
+* In case of an unexpected stop, one ore many secure channel might not get closed properly.
+*/
+void Applet::check_applet_available()
+{
+    if (_seiface != nullptr)
+    {
+        if(_seiface->transmit(0x00, 0x70, 0x00, 0x00, 0x01) == ERR_NOERR) 
+        {
+		    if(_seiface->getStatusWord() == SW_EXECUTION_OK) 
+            {
+			    _seiface->getResponse(&_channel);
+
+			    if(_seiface->transmit(_channel, 0xA4, 0x04, 0x00, _aid, _aidLen) == ERR_NOERR) 
+                {
+                    if((_seiface->getStatusWord() == SW_EXECUTION_OK) || ((_seiface->getStatusWord() & 0xFF00) == SW_DATA_AVAILABLE)) 
+                    {
+                        _seiface->transmit(0x00, 0x70, 0x80, _channel);
+                    }
+                    else if (_seiface->getStatusWord() == CONDITION_NOT_SATISFIED)
+                    {
+                        deselect(_channel);
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+* Close secure channel from a specific channel
+* @param[in]  channel, the secure channel to close.
+*/
+void Applet::deselect(int channel)
+{
+    if (_seiface != nullptr)
+    {
+        for(int i = 1; i<= channel; i++)
+        {
+            if (_seiface->transmit(i, 0x70, 0x80, i, 0x00) == ERR_NOERR)
+            {
+                if (_seiface->getStatusWord() == SW_EXECUTION_OK)
+                {
+                     _isSelected = false;
+                }
+            }
+        } 
+    }
+}
+
+
 
 /**
  * Transmit an APDU case 1 to the applet through the corresponding 
