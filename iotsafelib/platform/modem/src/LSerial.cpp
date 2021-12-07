@@ -34,7 +34,9 @@ LSerial::~LSerial(void) {
 
 
 bool LSerial::start(const char *modem_port) {
+#ifdef SERIAL_DEBUG
 	printf("Opening serial port...");
+#endif
 
 	const char* uart = (const char*) modem_port; //"/dev/ttyACM0";
 	int port;
@@ -56,7 +58,10 @@ bool LSerial::start(const char *modem_port) {
 		tcsetattr(m_uart, TCSANOW, &serial); // Apply configuration
 		fcntl(m_uart, F_SETFL, 0);
 
+#ifdef SERIAL_DEBUG
 		printf("Found serial %s %d\r\n", uart, m_uart);
+#endif
+
 		return true;
 	}
 	
@@ -141,11 +146,16 @@ bool LSerial::recv(char* data, unsigned long int toRead, unsigned long int* size
 }
 
 bool LSerial::stop(void) {
+#ifdef SERIAL_DEBUG
 	printf("Closing serial port...");
 	if(m_uart >= 0) {
+        printf("%d ", m_uart);
 		close(m_uart);
 	}
 	printf("OK\n");
+#else
+	if(m_uart >= 0)
+		close(m_uart);
+#endif
 	return true;
 }
-

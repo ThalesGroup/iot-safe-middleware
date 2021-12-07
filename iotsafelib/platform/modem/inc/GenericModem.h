@@ -35,7 +35,7 @@ class GenericModem: public SEInterface {
 			_at.close();
 		}
 
-	protected:
+	//protected:
 
 		bool transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen);
 

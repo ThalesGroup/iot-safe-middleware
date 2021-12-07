@@ -39,7 +39,6 @@ bool GenericModem::transmitApdu(uint8_t* apdu, uint16_t apduLen, uint8_t* respon
 			}
 			printf("%02X", apdu[i]);
 		}
-		printf("\r\n");
 	}
 	// -----
 #endif	// AT_DEBUG

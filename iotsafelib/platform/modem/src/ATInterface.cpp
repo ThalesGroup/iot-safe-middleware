@@ -102,9 +102,9 @@ bool ATInterface::readLine(char* data, unsigned long int* len) {
 }
 
 bool ATInterface::sendATCSIM(uint8_t* apdu, uint16_t apduLen, uint8_t* response, uint16_t* responseLen) {
-	char* buf;
-	uint16_t i;
-	unsigned long int off, len;
+	char* buf = nullptr;
+	uint16_t i = 0;
+	unsigned long int off, len = 0;
 
 	#ifdef AT_DEBUG
 	printf("SND: ");
@@ -131,6 +131,10 @@ bool ATInterface::sendATCSIM(uint8_t* apdu, uint16_t apduLen, uint8_t* response,
 		if(memcmp(buf, "ERROR\r\n", 7) == 0) {
 			return false;
 		}
+		if(memcmp(buf, "+CME ERROR", 10) == 0) {
+			return false;
+		}
+
 	} while((memcmp(buf, "+CSIM: ", 7) != 0));
 	#ifdef AT_DEBUG
 	printf("Orig RCV: ");
