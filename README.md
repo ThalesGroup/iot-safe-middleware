@@ -38,6 +38,14 @@ sudo apt-get install libssl-dev
 + Raspberry Pi 
 
 ## Build Steps
+
+### Applet selection
+
+The MVP version of the applet uses the following AID:
+```
+static uint8_t AID[] = { 0xA0, 0x00, 0x00, 0x00, 0x30, 0x53, 0xF1, 0x24, 0x01, 0x77, 0x01, 0x01, 0x49, 0x53, 0x41 };
+```
+
 ### Make
 If *CppUTest* is already installed and in the system path, the IoT Safe library and simple demo can be built by running ```make``` from the root folder.
 
@@ -69,6 +77,8 @@ Alternatively, *CMake* can be used to automatically pull *CppUTest* dependency a
 	make
 	make test
 ```
+
+
 ## JWT Signing demo
 An example app to demonstrate how the IoT Safe Applet can be used to sign JWT token.
 This example uses ECDSA keypair on the SIM/UICC to sign JWT. 

@@ -18,7 +18,7 @@
 #include <string.h>
 #include "CppUTest/TestHarness.h"
 
-#include "rot_tests_helper.h"
+#include "../include/rot_tests_helper.h"
 #include "ROT.h"
 #include "GenericModem.h"
 

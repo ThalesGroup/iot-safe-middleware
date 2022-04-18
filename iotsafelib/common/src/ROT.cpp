@@ -22,7 +22,7 @@
 
 /** Constants *******************************************************************/
 // AID for IoTSafe Applet
-static uint8_t AID[] = { 0xA0, 0x00, 0x00, 0x02, 0x48, 0x04, 0x00  };
+static uint8_t AID[] = { 0xA0, 0x00, 0x00, 0x00, 0x30, 0x53, 0xF1, 0x24, 0x01, 0x77, 0x01, 0x01, 0x49, 0x53, 0x41 };
 
 
 /**
@@ -111,8 +111,13 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
             if (transmit(_channel, 0xB0, p0, p1, cmd, cmdLen, 0) &&
                 getStatusWord() == SW_EXECUTION_OK)
             {
-                offset += getResponse(&(*data)[offset]);
+                uint16_t len = getResponse(&(*data)[offset]); 
+                offset += len;
                 result = ERR_NOERR;
+                if (len == 0)
+                {
+                    break;
+                }
             }
             else
             {
@@ -780,7 +785,7 @@ int ROT::putPublicKeyUpdate(const uint8_t *pubKey, uint16_t pubKeyLen)
 /** Public *******************************************************************/
 int ROT::getCertificateByContainerId(const uint8_t *containerId, uint16_t containerIdLen, uint8_t **cert, uint16_t *certLen)
 {
-    	printf("getCertificateByContainerId 1\r\n");
+    	printf("getCertificateByContainerId %d\r\n", *containerId);
 	return readFile(const_cast<uint8_t *>(AID), sizeof AID, containerId, containerIdLen, nullptr, 0, cert, certLen);
 }
 

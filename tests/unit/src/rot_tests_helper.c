@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "rot_tests_helper.h"
+#include "../include/rot_tests_helper.h"
 static void sprintByteArray(char * pdst, const unsigned char* pbytes, size_t length)
 {
     int i;
