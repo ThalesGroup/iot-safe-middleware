@@ -100,19 +100,19 @@ bool Applet::select(bool isBasic /* = true */)
             _channel = 1;
 
             if(_seiface->transmit(0x00, 0x70, 0x00, 0x00, 0x01) == ERR_NOERR) {
-		if(_seiface->getStatusWord() == SW_EXECUTION_OK) {
-			_seiface->getResponse(&_channel);
-			if(_seiface->transmit(0x00 | _channel, 0xA4, 0x04, 0x00, _aid, _aidLen) == ERR_NOERR) {
-				if((_seiface->getStatusWord() == SW_EXECUTION_OK) || ((_seiface->getStatusWord() & 0xFF00) == SW_DATA_AVAILABLE)) {
-					_isSelected = true;
-					_isBasic = false;
-					return true;
-				}
-			}
-					
-			_seiface->transmit(0x00, 0x70, 0x80, _channel);
-		}
-	    }
+                if(_seiface->getStatusWord() == SW_EXECUTION_OK || ((_seiface->getStatusWord() & 0xFF00) == SW_OK)) {
+                    _seiface->getResponse(&_channel);
+                    if(_seiface->transmit(0x00 | _channel, 0xA4, 0x04, 0x00, _aid, _aidLen) == ERR_NOERR) {
+                        if((_seiface->getStatusWord() == SW_EXECUTION_OK) || ((_seiface->getStatusWord() & 0xFF00) == SW_DATA_AVAILABLE)) {
+                            _isSelected = true;
+                            _isBasic = false;
+                            return true;
+                        }
+                    }
+                        
+                    _seiface->transmit(0x00, 0x70, 0x80, _channel);
+                }
+	        }
         }
     }
 	
