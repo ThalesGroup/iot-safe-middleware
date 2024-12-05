@@ -479,15 +479,17 @@ int ROT::computeSignatureUpdate(uint8_t operationMode,
     // Send command
     if(transmit(0x00, 0x2B, 0x80, 0x00, cmd, index, 0x00)) {
         if(getStatusWord() == 0x9000) {
-            getResponse(response);
+            uint16_t responseLength = getResponse(response);
             uint32_t length = 0;
             if (response[0] != 0x33) {
                 return ERR_INVALID_RESPONSE;
             }
-	    if(sign == nullptr) 
-            {
-            	return ERR_INVALID_PARAMETERS;
+            //handle leading 0
+            if(response[1] == 0x00){
+                //move the remaining data to the front
+                memcpy((response + 1),(response + 2),responseLength-2);
             }
+
             uint8_t numOfBytes = tlvParserLength(response + 1, &length);
             uint8_t* respSign = response + 1 + numOfBytes;
             
