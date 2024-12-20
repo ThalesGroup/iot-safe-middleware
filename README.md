@@ -32,6 +32,20 @@ sudo snap install --candidate cmake --classic
 sudo apt-get install libssl-dev
 ```
 
+#### Cross compilation On Linux Platform
+
+To cross compile for different target on Linux, please configure `CC`, `AR`, and `CXX` variable in [Makefile](./Makefile). for example to cross compile for ARM (hardware float) target
+```
+CXX = arm-linux-gnueabihf-g++
+CC = arm-linux-gnueabihf-gcc
+AR = arm-linux-gnueabihf-ar
+```
+you also need to install Linux dependency for cross compile target
+
+```bash
+sudo apt-get install libcpputest-dev:armhf
+```
+
 ### Hardware Test Requirements
 + 3G/4G/LTE Modem e.g Cinterion Connect Shield / Concept Board
 + IoT Safe SIM

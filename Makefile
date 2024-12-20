@@ -1,4 +1,9 @@
 
+# Cross compiler for ARM target
+#CXX = arm-linux-gnueabihf-g++
+#CC = arm-linux-gnueabihf-gcc
+#AR = arm-linux-gnueabihf-ar
+
 CPPFLAGS += -I /usr/local/include -DAT_DEBUG
 LD_LIBRARIES = -L/usr/local/lib -lCppUTest -lCppUTestExt
 
