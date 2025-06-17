@@ -245,8 +245,9 @@ class ROT: public Applet {
 
     private:
 	RotKeyPair _keypairs;
-
-        int readFile(const uint8_t *path, uint16_t pathLen,
+	uint16_t getFileLength(const uint8_t *fileId, uint16_t fileIdLen,
+				 const uint8_t *fileLbl, uint16_t fileLblLen);
+    int readFile(const uint8_t *path, uint16_t pathLen,
 				 const uint8_t *fileId, uint16_t fileIdLen,
 				 const uint8_t *fileLbl, uint16_t fileLblLen,
 				 uint8_t **data, uint16_t *dataLen);

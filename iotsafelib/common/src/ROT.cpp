@@ -35,7 +35,107 @@ ROT::ROT(void) : Applet(AID, sizeof(AID)),_keypairs{}
 
 
 /** PRIVATE *******************************************************************/
+
 #define READ_LINE_LEN 255
+
+/**
+ * get the size of the container
+ * return -1 if error
+*/
+uint16_t  ROT::getFileLength(
+				 const uint8_t *fileId, uint16_t fileIdLen,
+				 const uint8_t *fileLbl, uint16_t fileLblLen){
+    uint8_t data[50];
+    uint16_t result = -1;
+    uint16_t cmdLen = fileIdLen + fileLblLen;
+    cmdLen += (fileIdLen > 0) ? 2 : 0;  // tag length
+    cmdLen += (fileLblLen > 0) ? 2 : 0; // tag length
+
+    if (cmdLen > CMD_MAX_LEN)
+    {
+        return ERR_INVALID_PARAMETERS;
+    }
+
+    uint8_t cmd[CMD_MAX_LEN];     
+    uint16_t index = 0;
+    uint16_t offset = 0;
+    if (fileIdLen > 0)
+    {
+        if (!fileId)
+        {
+            return ERR_INVALID_PARAMETERS;
+        }
+        cmd[index++] = 0x83;
+        cmd[index++] = (uint8_t)(fileIdLen & 0xFF);
+        memcpy(cmd + index, fileId, fileIdLen);
+        index += fileIdLen;
+    }        
+    if (fileLblLen > 0)
+    {
+        if (!fileLbl)
+        {
+            return ERR_INVALID_PARAMETERS;
+        }
+        cmd[index++] = 0x73;
+        cmd[index++] = (uint8_t)(fileLblLen & 0xFF);
+        memcpy(cmd + index, fileLbl, fileLblLen);
+        index += fileLblLen;
+    }
+
+    if (transmit(_channel, 0xCB, 0xC3, 0x00, cmd, cmdLen, 0) &&
+        getStatusWord() == SW_EXECUTION_OK)
+    {
+        uint16_t len = getResponse(data); 
+        if(len == 0){
+            return -1;
+        }
+        result = 0;
+        //search for tag 20 within the response'
+        /**
+         * C3 XX
+         *      73 XX XX..XX
+         *      83 XX XX..XX
+         *      60 01 XX
+         *      4A 01 XX
+         *      21 01 XX
+         *      20 02 XX YY
+        */
+        //starting index is different because some version of applet return C3 while other return the content of C3 only
+        if(data[0] == 0xC3){
+            index = 2;
+        }
+        else{
+            index = 0;
+        }
+        
+        while(result == 0 && index<len){
+            //check if the tag is 0x20
+            if(data[index] == 0x20){
+                //get the length of the file
+                result = (data[index + 2 ]<<8) + data[index + 3];
+            }
+            else{
+                //move the index to the next tag
+                index = index + 2 + data[index+1];
+            }
+        }
+
+        //not found, return 0
+        if(result == 0){
+            return -1;
+        }
+
+    }
+    else
+    {
+        result = -1;
+    }
+
+    return result;
+
+
+}
+
 int ROT::readFile(const uint8_t *path, uint16_t pathLen,
                   const uint8_t *fileId, uint16_t fileIdLen,
                   const uint8_t *fileLbl, uint16_t fileLblLen,
@@ -88,6 +188,18 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
             cmd[index++] = (uint8_t)(fileLblLen & 0xFF);
             memcpy(cmd + index, fileLbl, fileLblLen);
             index += fileLblLen;
+        }
+
+        //if length is not specified, read the length infortmation of the file
+        if(*dataLen == 0){
+            printf("Get the length of the container\r\n");
+            *dataLen = (uint16_t)getFileLength(fileId, fileIdLen,fileLbl, fileLblLen);
+            printf("Container length : %d\r\n", *dataLen);
+            if(*dataLen == ((uint16_t) -1)){
+                *dataLen = 0;
+                return ERR_INVALID_PARAMETERS;
+            }
+
         }
 
         *data = (uint8_t *)malloc((*dataLen + READ_LINE_LEN) * sizeof(uint8_t));
