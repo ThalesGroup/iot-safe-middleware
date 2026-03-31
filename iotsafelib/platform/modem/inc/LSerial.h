@@ -27,7 +27,7 @@ class LSerial: public Serial {
 
 		bool start(const char *modem_port);
 		bool send(char* data, unsigned long  int toWrite, unsigned long  int* written);
-		bool recv(char* data, unsigned long int toRead, unsigned long  int* read);
+		bool recv(char* data, unsigned long int toRead, unsigned long  int* read, int ms_timeout);
 		bool stop(void);
 
 	private:

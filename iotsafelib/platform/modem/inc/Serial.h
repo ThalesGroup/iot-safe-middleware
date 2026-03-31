@@ -28,7 +28,7 @@ class Serial {
 
 		virtual bool start(const char *modem_port) = 0;
 		virtual bool send(char* data, unsigned long  int toWrite, unsigned long  int* written) = 0;
-		virtual bool recv(char* data, unsigned long int toRead, unsigned long  int* read) = 0;
+		virtual bool recv(char* data, unsigned long int toRead, unsigned long  int* read, int ms_timeout) = 0;
 		virtual bool stop(void) = 0;
 
 	protected:

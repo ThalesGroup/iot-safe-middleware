@@ -51,6 +51,8 @@ sudo apt-get install libcpputest-dev:armhf
 + IoT Safe SIM
 + Raspberry Pi 
 
+On Linux platform with ModemManager, ModemManager may interfere with the middleware on the modem serial port causing the application unable to read the response from IoT Safe Applet. To fix this issue, create udev rule to force ModemManager to ignore the selected modem serial port used by the middleware
+
 ## Build Steps
 
 ### Applet selection

@@ -22,6 +22,9 @@
 #include <termios.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/select.h>
+#include <sys/ioctl.h>
+#include <errno.h>
 
 //#define SERIAL_DEBUG
 
@@ -41,22 +44,24 @@ bool LSerial::start(const char *modem_port) {
 	const char* uart = (const char*) modem_port; //"/dev/ttyACM0";
 	int port;
 	struct termios serial;
+	memset(&serial, 0, sizeof(serial));
 
-	if((m_uart = open(uart, O_RDWR | O_NOCTTY | O_NDELAY)) >= 0) {
+	if((m_uart = open(uart, O_RDWR | O_NOCTTY | O_NONBLOCK)) >= 0) {
 		tcgetattr(m_uart, &serial);
 
-		serial.c_iflag = 0;
+		serial.c_cflag = CS8 | HUPCL | CREAD | CLOCAL;
+		serial.c_iflag = IGNPAR;
 		serial.c_oflag = 0;
 		serial.c_lflag = 0;
-		serial.c_cflag = 0;
-
 		serial.c_cc[VMIN] = 0;
 		serial.c_cc[VTIME] = 0;
-
-		serial.c_cflag = B115200 | CS8 | CREAD;
-
+		// Set baud, e.g.:
+		cfsetispeed(&serial, B115200);
+		cfsetospeed(&serial, B115200);
+		
 		tcsetattr(m_uart, TCSANOW, &serial); // Apply configuration
-		fcntl(m_uart, F_SETFL, 0);
+		tcflush(m_uart, TCIOFLUSH);
+		ioctl(m_uart, TIOCEXCL);
 
 #ifdef SERIAL_DEBUG
 		printf("Found serial %s %d\r\n", uart, m_uart);
@@ -107,29 +112,55 @@ bool LSerial::send(char* data, unsigned long int toWrite, unsigned long  int* si
 	return true;
 }
 
-bool LSerial::recv(char* data, unsigned long int toRead, unsigned long int* size) {
-	unsigned long int i;
-	int r;
-	
-	if(m_uart < 0) {
-		return false;
-	}
-	
-	for(i=0; i<toRead;) {
-		r = read(m_uart, &data[i], (toRead - i));
-		if(r == -1) {
-			return false;
-		}
-		else if(r) {
-			i += r;
-		}
-		
-	}
+bool LSerial::recv(char* data, unsigned long int toRead, unsigned long int* size, int ms_timeout) {
+	unsigned long int i = 0;
+    int r;
+    fd_set rfds;
+    struct timeval tv;
+    int retval;
 
-	*size = toRead;
-
-	
-	#ifdef SERIAL_DEBUG
+    while (i == 0) {
+        FD_ZERO(&rfds);
+        FD_SET(m_uart, &rfds);
+        // Set timeout
+        tv.tv_sec = ms_timeout / 1000;
+        tv.tv_usec = (ms_timeout % 1000) * 1000;
+        retval = select(m_uart + 1, &rfds, NULL, NULL, &tv);
+        if (retval == -1) {
+            printf("select() error");
+            return false;  
+        } 
+		else if (retval == 0) {
+            printf("recv timeout\n");
+            return false;
+        }
+        // Data is available
+		if (FD_ISSET(m_uart, &rfds))
+		{ 
+			r = read(m_uart, &data[i], toRead);
+			if (r == 0)
+			{
+				printf("read() 0 try again, FD_ISSET = %d\n", FD_ISSET(m_uart, &rfds));
+				usleep(1000);
+			}
+			else if ((r == -1) && (errno == EAGAIN))
+			{
+				printf("read() error with code %d\n", errno);
+				usleep(1000);
+			}
+			else
+			{
+				i += r;
+			}		
+		}
+		else
+		{
+			printf("nothing to read");
+		}
+        
+    }
+    *size = i;
+#ifdef SERIAL_DEBUG
 	if(*size) {
 		unsigned long int i;
 		printf("< ");

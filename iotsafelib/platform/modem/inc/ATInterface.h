@@ -19,6 +19,7 @@
 #define __AT_INTERFACE_H__
 
 #include "Serial.h"
+#define NUM_BYTES_TO_READ 600  //Sets the maximum possible number of bytes that can be read in a single read. (seems that the maximum seen is 537 bytes during a certificate request)
 
 class ATInterface {
 	public:
@@ -38,7 +39,9 @@ class ATInterface {
 
 	private:
 		Serial* _serial;
-
+		char _readLineBuffer[NUM_BYTES_TO_READ];
+		int _readBufferOffset;
+		int _readBufferLen;
 };
 
 #endif /* __AT_INTERFACE_H__ */

@@ -17,6 +17,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include "ROT.h"
 
@@ -141,6 +142,7 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
                   const uint8_t *fileLbl, uint16_t fileLblLen,
                   uint8_t **data, uint16_t *dataLen)
 {
+    bool transmitResult = false;
     int result = ERR_GENERIC;
     if (!path || data == nullptr)
     {
@@ -154,7 +156,7 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
     if (transmit(_channel, 0xA4, 0x04, 0x00, path, pathLen) &&
         getStatusWord() == SW_EXECUTION_OK)
     {
-	uint16_t offset = 0;
+        uint16_t offset = 0;
         uint8_t toread;
 
         uint16_t cmdLen = fileIdLen + fileLblLen;
@@ -203,6 +205,7 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
         }
 
         *data = (uint8_t *)malloc((*dataLen + READ_LINE_LEN) * sizeof(uint8_t));
+        memset(*data, 0, (*dataLen + READ_LINE_LEN) * sizeof(uint8_t));
         if (*data == nullptr) 
         {
 	    return ERR_OUT_OF_MEMORY;
@@ -220,29 +223,50 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
                 return ERR_INVALID_PARAMETERS;
             }
 
-            if (transmit(_channel, 0xB0, p0, p1, cmd, cmdLen, 0) &&
-                getStatusWord() == SW_EXECUTION_OK)
+            transmitResult = transmit(_channel, 0xB0, p0, p1, cmd, cmdLen, 0);
+            if (transmitResult)
             {
-                uint16_t len = getResponse(&(*data)[offset]); 
-                offset += len;
-                result = ERR_NOERR;
-                if (len == 0)
+                if(getStatusWord() == SW_EXECUTION_OK)
                 {
+                    uint16_t len = getResponse(&(*data)[offset]); 
+                    offset += len;
+                    result = ERR_NOERR;
+                    if (len == 0)
+                    {
+                        break;
+                    }
+                }
+                else if(getStatusWord() == SW_EMPTY_CONTAINER)
+                {
+                    // Read nothing from first container
+                    if (offset == 0)
+                    {
+                        result = ERR_NO_FILE_AVAILABLE;
+                    }
+                    // Read all available containers
+                    else
+                    {
+                        result = ERR_NOERR;
+                    }
+
+                    break;
+                }
+                else
+                {
+                    result = ERR_INVALID_RESPONSE;
                     break;
                 }
             }
-            else
+            else // transmit fails
             {
                 result = ERR_INVALID_RESPONSE;
-                break;
             }
         }
-
         if (result == ERR_NOERR)
         {
             // Succeed
             (*data)[offset] = '\0';
-            *dataLen += 1;
+            *dataLen = offset + 1; 
         }
         else if (*data != nullptr)
         {
@@ -250,6 +274,10 @@ int ROT::readFile(const uint8_t *path, uint16_t pathLen,
             free(*data);
         }
         return result;
+    }
+    else
+    {
+        result = ERR_INVALID_RESPONSE;
     }
     return result;
 }
